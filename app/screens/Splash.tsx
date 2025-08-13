@@ -16,40 +16,42 @@ const Splash = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Animatable.Image
-        animation="fadeIn"
-        duration={2000}
-        style={styles.backgroundImage}
-        source={require("@/assets/images/Section1.png")}
-      />
+    <>
+      <View style={styles.container}>
+        <Animatable.Image
+          animation="fadeIn"
+          duration={2000}
+          style={styles.backgroundImage}
+          source={require("@/assets/images/Section1.png")}
+        />
 
-      {showButtons && (
-        <Animatable.View
-          animation="fadeInUp"
-          duration={1000}
-          style={styles.overlay}
-        >
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.loginButton}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Text style={styles.buttonText}>Login</Text>
-            </TouchableOpacity>
+        {showButtons && (
+          <Animatable.View
+            animation="fadeInUp"
+            duration={1000}
+            style={styles.overlay}
+          >
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.loginButton}
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text style={styles.buttonText}>Login</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.signupButton}
-              onPress={() => navigation.navigate("SignUp")}
-            >
-              <Text style={[styles.buttonText, styles.signupButtonText]}>
-                Sign Up
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Animatable.View>
-      )}
-    </View>
+              <TouchableOpacity
+                style={styles.signupButton}
+                onPress={() => navigation.navigate("Register")}
+              >
+                <Text style={[styles.buttonText, styles.signupButtonText]}>
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Animatable.View>
+        )}
+      </View>
+    </>
   );
 };
 

@@ -1,3 +1,4 @@
+import { POST_LOGIN } from "@/app/service/APIService";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import React, { useState } from "react";
@@ -12,8 +13,22 @@ import {
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [secureText, setSecureText] = useState(true);
   const navigation = useNavigation<any>();
+
+  const handleLogin = async () => {
+    try {
+      const success = await POST_LOGIN(email, password);
+      if (success) {
+        alert(`Login success! Welcome back ${email}`);
+        navigation.navigate("Home");
+      } else {
+        alert("Login failed: Invalid email or password");
+      }
+    } catch (error) {
+      alert("Login failed: Something went wrong");
+      console.error("Login error", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -44,11 +59,15 @@ const LoginScreen = () => {
         />
       </View>
 
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={() => navigation.navigate("Home")}
-      >
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.forgotPasswordButton}
+        onPress={() => navigation.navigate("ForgotPassword")}
+      >
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
       <View style={styles.dividerContainer}>
@@ -162,6 +181,14 @@ const styles = StyleSheet.create({
   googleButton: {
     backgroundColor: "#DB4437",
     borderRadius: 100,
+  },
+  forgotPasswordButton: {
+    alignItems: "center",
+    marginTop: 15,
+  },
+  forgotPasswordText: {
+    color: "#007AFF",
+    fontSize: 14,
   },
 });
 

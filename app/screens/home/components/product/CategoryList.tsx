@@ -19,18 +19,20 @@ const CategoryList = () => {
   ];
 
   return (
-    <View>
-      <View style={styles.categoriesContainer}>
-        {topCategories.map((category) => (
-          <TouchableOpacity key={category.id} style={styles.categoryItem}>
-            <Text style={styles.categoryText}>{category.name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <>
       <View>
-        <Text style={styles.title}>Dresses</Text>
+        <View style={styles.categoriesContainer}>
+          {topCategories.map((category) => (
+            <TouchableOpacity key={category.id} style={styles.categoryItem}>
+              <Text style={styles.categoryText}>{category.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View>
+          <Text style={styles.title}>Dresses</Text>
+        </View>
       </View>
-    </View>
+    </>
   );
 };
 

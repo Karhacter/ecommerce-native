@@ -1,69 +1,84 @@
+import { GET_ALL, GET_IMG } from "@/app/service/APIService";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const ProductList = () => {
   const navigation = useNavigation<any>();
 
-  const products = [
-    {
-      id: "1",
-      brand: "Roller Rabbit",
-      name: "Vado Odelle Dress",
-      price: "$198.00",
-      image: require("@/assets/images/sneakers.jpg"),
-      widthRatio: 0.6,
-    },
-    {
-      id: "2",
-      brand: "endless rose",
-      name: "Bubble Elastic T-shirt",
-      price: "$50.00",
-      image: require("@/assets/images/sneakers.jpg"),
-      widthRatio: 0.4,
-    },
-    {
-      id: "3",
-      brand: "Theory",
-      name: "Irregular Rib Skirt",
-      price: "$175.00",
-      image: require("@/assets/images/sneakers.jpg"),
-      widthRatio: 0.5,
-    },
-    {
-      id: "4",
-      brand: "Theory",
-      name: "Irregular Rib Skirt",
-      price: "$175.00",
-      image: require("@/assets/images/sneakers.jpg"),
-      widthRatio: 0.5,
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const [Categoires, setCategories] = useState([]);
+  const [isNotificationModalVisible, setNotificationModalVisible] =
+    useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Number | null>(null);
+
+  useEffect(() => {
+    const FetchProduct = async () => {
+      try {
+        const endpoint = selectedCategory
+          ? `public/categories/${selectedCategory}/products?pageNumber=0&pageSize=5&sortBy=productId&sortOrder=asc`
+          : "public/products?pagNumber=0&pageSize=5&sortBy=productId&sortOrder=asc";
+        const response = await GET_ALL(endpoint);
+        setProducts(response.data.content);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+      }
+    };
+
+    FetchProduct();
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await GET_ALL(
+          "public/categories?pageNumber=0&pageSize=5&sortBy=categoryId&sortOrder=asc"
+        );
+        setCategories(response.data.content);
+      } catch (error) {
+        console.error("Error fetching categories: ", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   return (
-    <View style={styles.productList}>
-      {products.map((item) => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.productCard}
-          onPress={() =>
-            navigation.navigate("ProductDetail", { product: item })
-          }
-        >
-          <Image source={item.image} style={styles.productImage} />
-          <TouchableOpacity style={styles.heartIcon}>
-            <Ionicons name="heart-outline" size={18} />
+    <>
+      <View style={styles.productList}>
+        {products.map((product: any) => (
+          <TouchableOpacity
+            key={product.productId}
+            style={styles.productCard}
+            onPress={() =>
+              navigation.push("ProductDetail", {
+                productId: product.productId,
+              })
+            }
+          >
+            <Image
+              source={{ uri: GET_IMG("products", product.image) }}
+              style={styles.productImage}
+            />
+            <TouchableOpacity style={styles.heartIcon}>
+              <Ionicons name="heart-outline" size={18} />
+            </TouchableOpacity>
+            {product.brand && (
+              <Text style={styles.brand}>{product.categoryName}</Text>
+            )}
+
+            <Text style={styles.productName}>{product.productName}</Text>
+
+            <View style={styles.priceRow}>
+              <Text style={styles.price}>
+                ${product.price.toLocaleString()}
+              </Text>
+            </View>
           </TouchableOpacity>
-          {item.brand && <Text style={styles.brand}>{item.brand}</Text>}
-
-          <Text style={styles.productName}>{item.name}</Text>
-
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>${item.price.toLocaleString()}</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
-    </View>
+        ))}
+      </View>
+    </>
   );
 };
 

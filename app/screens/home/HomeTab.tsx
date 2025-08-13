@@ -53,6 +53,7 @@ const HomeTab = () => {
       image: require("@/assets/images/jewelry.jpg"),
     },
   ];
+
   return (
     <View style={styles.container}>
       {/* Header */}

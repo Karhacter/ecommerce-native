@@ -9,18 +9,20 @@ const FeaturedProducts = () => {
     image: require("@/assets/images/sneakers.jpg"),
   };
   return (
-    <View style={styles.featuredCard}>
-      <Image
-        source={featuredProduct.image}
-        style={styles.featuredImage}
-        resizeMode="contain"
-      />
-      <View style={styles.featuredInfo}>
-        <Text style={styles.featuredBrand}>{featuredProduct.brand}</Text>
-        <Text style={styles.featuredName}>{featuredProduct.name}</Text>
-        <Text style={styles.featuredPrice}>{featuredProduct.price}</Text>
+    <>
+      <View style={styles.featuredCard}>
+        <Image
+          source={featuredProduct.image}
+          style={styles.featuredImage}
+          resizeMode="contain"
+        />
+        <View style={styles.featuredInfo}>
+          <Text style={styles.featuredBrand}>{featuredProduct.brand}</Text>
+          <Text style={styles.featuredName}>{featuredProduct.name}</Text>
+          <Text style={styles.featuredPrice}>{featuredProduct.price}</Text>
+        </View>
       </View>
-    </View>
+    </>
   );
 };
 
