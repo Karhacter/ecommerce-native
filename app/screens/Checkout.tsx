@@ -1,10 +1,14 @@
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { Image } from "expo-image";
+import * as Linking from "expo-linking";
 import { useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
+import * as WebBrowser from "expo-web-browser";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,13 +25,17 @@ const Checkout = () => {
   const [expDate, setExpDate] = useState("09/17");
   const [cvv, setCvv] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [cartTotal, setCartTotal] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const navigation = useNavigation<any>();
 
   const [selectedMethod, setSelectedMethod] = useState<
-    "card" | "cash" | "apple"
+    "card" | "cash" | "vnpay"
   >("card");
+
   const [userInfo, setUserInfo] = useState<any>(null);
 
+  // 🟢 Lấy thông tin user và giỏ hàng
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -41,30 +49,145 @@ const Checkout = () => {
       }
     };
 
+    const fetchCartTotal = async () => {
+      try {
+        const cartId = await AsyncStorage.getItem("cart-id");
+        if (cartId) {
+          setCartTotal(150000); // TODO: thay bằng API lấy giỏ hàng thật
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi lấy tổng giỏ hàng:", err);
+      }
+    };
+
     fetchUserData();
+    fetchCartTotal();
   }, []);
 
-  const handleCheckout = async () => {
-    try {
-      const email = await AsyncStorage.getItem("user-email");
-      const cartId = await AsyncStorage.getItem("cart-id");
+  // 🟢 Lắng nghe Deep Link từ VNPay
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const { queryParams } = Linking.parse(event.url);
 
-      if (!email || !cartId) {
-        alert("Không tìm thấy thông tin người dùng hoặc giỏ hàng.");
+      if (!queryParams?.vnp_TxnRef) {
+        Alert.alert("❌ Lỗi", "Thiếu mã giao dịch");
         return;
       }
 
+      try {
+        // 🟢 Gọi API check-payment-vnpay
+        const resp = await axios.get(
+          "http://192.168.1.3:3000/api/check-payment-vnpay",
+          {
+            params: { vnp_TxnRef: queryParams.vnp_TxnRef },
+          }
+        );
+
+        if (resp.data.success) {
+          Alert.alert(
+            "✅ Thanh toán thành công",
+            `Mã đơn: ${queryParams.vnp_TxnRef}`
+          );
+          setShowSuccess(true);
+        } else {
+          Alert.alert(
+            "❌ Thanh toán thất bại",
+            resp.data.message || "Lỗi không xác định"
+          );
+        }
+      } catch (err) {
+        console.error("❌ Lỗi check-payment-vnpay:", err);
+        Alert.alert("❌ Không thể xác minh thanh toán", "Vui lòng thử lại.");
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // 🟢 Thanh toán
+  const handleCheckout = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      const email = await AsyncStorage.getItem("user-email");
+      const cartId = await AsyncStorage.getItem("cart-id");
+      const token = await AsyncStorage.getItem("jwt-token");
+
+      if (!email || !cartId) {
+        alert("Không tìm thấy thông tin người dùng hoặc giỏ hàng.");
+        setIsProcessing(false);
+        return;
+      }
+
+      if (selectedMethod === "vnpay") {
+        if (cartTotal <= 0) {
+          alert("Giỏ hàng trống hoặc không có sản phẩm.");
+          setIsProcessing(false);
+          return;
+        }
+
+        const txnRef = `ORD_${Date.now()}`;
+        const orderInfo = `Thanh toan don hang ${txnRef}`;
+
+        const resp = await axios.get("http://192.168.1.3:3000/api/create-qr", {
+          params: {
+            txnRef,
+            orderInfo,
+            email,
+            cartId,
+            token,
+            paymentMethod: "vnpay",
+            returnUrl: "ecommercenative://payment-result", // 🟢 return về app
+          },
+          responseType: "text",
+        });
+
+        const url: string =
+          typeof resp.data === "string" ? resp.data : resp?.data?.url ?? "";
+
+        if (!url) {
+          Alert.alert("Lỗi", "Không tạo được liên kết thanh toán");
+          setIsProcessing(false);
+          return;
+        }
+
+        // 🟢 Mở VNPay trong trình duyệt
+        try {
+          await WebBrowser.openBrowserAsync(url);
+        } catch (err) {
+          console.warn(
+            "⚠️ WebBrowser không khả dụng, fallback sang Linking:",
+            err
+          );
+          await Linking.openURL(url);
+        }
+
+        setIsProcessing(false);
+        return;
+      }
+
+      // 🟢 Các phương thức khác (card, cash)
       const encodedEmail = encodeURIComponent(email);
       const endpoint = `public/users/${encodedEmail}/carts/${cartId}/payments/${selectedMethod}/order`;
 
-      const response = await POST_ADD(endpoint, {}); // body rỗng
+      const response = await POST_ADD(endpoint, {});
       console.log("✅ Đặt hàng thành công:", response.data);
 
-      // Mở modal thành công
       setShowSuccess(true);
     } catch (error) {
       console.error("❌ Lỗi khi đặt hàng:", error);
       alert("Đặt hàng thất bại. Vui lòng thử lại.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -134,27 +257,44 @@ const Checkout = () => {
           <TouchableOpacity
             style={[
               styles.methodCard,
-              selectedMethod === "apple" && styles.methodCardActive,
+              selectedMethod === "vnpay" && styles.methodCardActive,
             ]}
-            onPress={() => setSelectedMethod("apple")}
+            onPress={() => setSelectedMethod("vnpay")}
           >
             <View style={styles.methodIcon}>
-              <FontAwesome
-                name="apple"
-                size={24}
-                color={selectedMethod === "apple" ? "#fff" : "#666"}
-              />
+              <Text
+                style={[
+                  styles.vnpayIcon,
+                  selectedMethod === "vnpay" && styles.vnpayIconActive,
+                ]}
+              >
+                VN
+              </Text>
             </View>
             <Text
               style={[
                 styles.methodText,
-                selectedMethod === "apple" && styles.methodTextActive,
+                selectedMethod === "vnpay" && styles.methodTextActive,
               ]}
             >
-              Apple Pay
+              VNPAY
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Web-specific VNPay message */}
+
+        {/* VNPay Info */}
+        {selectedMethod === "vnpay" && (
+          <View style={styles.vnpayInfo}>
+            <Text style={styles.vnpayInfoText}>
+              💳 Thanh toán qua VNPay - An toàn và tiện lợi
+            </Text>
+            <Text style={styles.vnpayInfoText}>
+              💰 Tổng tiền: {cartTotal.toLocaleString("vi-VN")} VND
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Card Preview */}
@@ -289,14 +429,25 @@ const Checkout = () => {
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.confirmButton} onPress={handleCheckout}>
-          <Text style={styles.confirmButtonText}>Confirm Payment</Text>
-          <FontAwesome
-            name="check-circle"
-            size={20}
-            color="#fff"
-            style={styles.buttonIcon}
-          />
+        <TouchableOpacity
+          style={[
+            styles.confirmButton,
+            isProcessing && styles.confirmButtonDisabled,
+          ]}
+          onPress={handleCheckout}
+          disabled={isProcessing}
+        >
+          <Text style={styles.confirmButtonText}>
+            {isProcessing ? "Processing..." : "Confirm Payment"}
+          </Text>
+          {!isProcessing && (
+            <FontAwesome
+              name="check-circle"
+              size={20}
+              color="#fff"
+              style={styles.buttonIcon}
+            />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -509,6 +660,69 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 8,
+  },
+  vnpayIcon: {
+    fontSize: 18,
+    color: "#666",
+  },
+  vnpayIconActive: {
+    color: "#fff",
+  },
+  vnpayHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
+    backgroundColor: "#4285F4",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  vnpayHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  vnpayCloseButton: {
+    padding: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f8f9fa",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#666",
+  },
+  confirmButtonDisabled: {
+    opacity: 0.7,
+    backgroundColor: "#ccc",
+  },
+  webVnpayMessage: {
+    backgroundColor: "#e0f7fa",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  webVnpayText: {
+    fontSize: 14,
+    color: "#007bff",
+    fontWeight: "500",
+  },
+  vnpayInfo: {
+    backgroundColor: "#f0f8ff",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  vnpayInfoText: {
+    fontSize: 14,
+    color: "#0066cc",
+    fontWeight: "500",
+    textAlign: "center",
+    marginBottom: 4,
   },
 });
 

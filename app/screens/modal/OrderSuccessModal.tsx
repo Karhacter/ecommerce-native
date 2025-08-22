@@ -23,7 +23,7 @@ const OrderSuccessModal: React.FC<Props> = ({
           <View style={styles.iconCircle}>
             <MaterialIcons name="check-circle" size={48} color="green" />
           </View>
-          <Text style={styles.title}>Chúc mừng!</Text>
+          <Text style={styles.title}>Chúc Mừng!</Text>
           <Text style={styles.subtitle}>
             Đơn hàng của bạn đã được đặt thành công.
           </Text>

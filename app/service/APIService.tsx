@@ -1,9 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosResponse } from "axios";
 
-// let API_URL = "http://localhost:8080/api";
-let API_URL = "http://10.18.14.78:8080/api";
-// let API_URL = "http://10.18.14.77:8080/api";
+let API_URL = "http://192.168.1.3:8080/api";
 
 async function getToken() {
   return await AsyncStorage.getItem("jwt-token");
@@ -15,6 +13,7 @@ export async function callApi(
   data: any = null
 ): Promise<AxiosResponse<any>> {
   const token = await getToken();
+
   return axios({
     method,
     url: `${API_URL}/${endpoint}`,
@@ -60,6 +59,12 @@ export function GET_ID(
   return callApi(`${endpoint}/${id}`, "GET");
 }
 
+export async function GET_CUSTOM(
+  endpoint: string
+): Promise<AxiosResponse<any>> {
+  return callApi(endpoint, "GET");
+}
+
 export function POST_ADD(
   endpoint: string,
   data: any
@@ -89,27 +94,33 @@ export function GET_IMG(endpoint: string, imgName: string): string {
 export async function POST_LOGIN(
   email: string,
   password: string
-): Promise<boolean> {
+): Promise<string | null> {
   try {
+    // 👉 Chỉ gọi backend để login
     const response = await axios.post(`${API_URL}/login`, { email, password });
     const token = response.data["jwt-token"];
+
     if (token) {
       await AsyncStorage.setItem("jwt-token", token);
       await AsyncStorage.setItem("user-email", email);
-      console.log("user-email", email);
+
+      // Lấy user info (kèm cartId)
       const userResponse = await GET_ID(
         `public/users/email`,
         encodeURIComponent(email)
       );
-      const cartId = userResponse.data.cart.cartId;
-      await AsyncStorage.setItem("cart-id", String(cartId));
-      return true;
+      const cartId = userResponse.data.cart?.cartId;
+      if (cartId) {
+        await AsyncStorage.setItem("cart-id", String(cartId));
+      }
+
+      return token;
     } else {
-      return false;
+      return null;
     }
-  } catch (error) {
-    console.error("Login error", error);
-    return false;
+  } catch (error: any) {
+    console.error("Login error:", error.response?.data || error.message);
+    return null;
   }
 }
 
@@ -206,6 +217,7 @@ export function REMOVE_PRODUCT_FROM_CART(
   const url = `public/carts/${cartId}/product/${productId}`;
   return callApi(url, "DELETE");
 }
+
 export function GET_CART_BY_USER_EMAIL_AND_ID(
   email: string,
   cartId: number
@@ -214,6 +226,7 @@ export function GET_CART_BY_USER_EMAIL_AND_ID(
   const url = `public/users/${encodedEmail}/carts/${cartId}`;
   return callApi(url, "GET");
 }
+
 export function ADD_TO_CART(
   cartId: number,
   productId: number,
@@ -227,4 +240,68 @@ export function GET_USER_ORDERS(email: string): Promise<AxiosResponse<any>> {
   const encodedEmail = encodeURIComponent(email);
   const url = `public/users/${encodedEmail}/orders`;
   return callApi(url, "GET");
+}
+
+export async function getCartByEmailAndId(
+  email: string,
+  cartId: string | number
+) {
+  return callApi(
+    `public/users/${encodeURIComponent(email)}/carts/${cartId}`,
+    "GET"
+  ).then((r) => r.data);
+}
+
+const overlayKey = (cartId: string | number) => `cart-qty-overlay:${cartId}`;
+
+export async function getCartQtyOverlay(
+  cartId: string | number
+): Promise<Record<string, number>> {
+  const raw = await AsyncStorage.getItem(overlayKey(cartId));
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+// Create order from cart
+export async function createOrder(
+  email: string,
+  cartId: string | number,
+  paymentMethod: string
+) {
+  const path = `public/users/${encodeURIComponent(
+    email
+  )}/carts/${cartId}/payments/${encodeURIComponent(paymentMethod)}/order`;
+  return callApi(path, "POST").then((r) => r.data);
+}
+
+export async function setCartQtyOverlay(
+  cartId: string | number,
+  overlay: Record<string, number>
+) {
+  await AsyncStorage.setItem(overlayKey(cartId), JSON.stringify(overlay));
+}
+
+export async function updateCartItem(
+  cartId: string | number,
+  productId: string | number,
+  quantity: number
+) {
+  return callApi(
+    `public/carts/${cartId}/products/${productId}/quantity/${quantity}`,
+    "PUT"
+  ).then((r) => r.data);
+}
+
+export async function removeCartItem(
+  cartId: string | number,
+  productId: string | number
+) {
+  // Swagger shows DELETE path uses singular 'product'
+  return callApi(`public/carts/${cartId}/product/${productId}`, "DELETE").then(
+    (r) => r.data
+  );
 }

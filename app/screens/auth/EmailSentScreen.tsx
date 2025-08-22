@@ -1,7 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
-import React from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -24,23 +23,23 @@ const EmailSentScreen = () => {
 
         <Text style={styles.title}>Check Your Email</Text>
         <Text style={styles.subtitle}>
-          We've sent a password reset link to:
+          Chúng tôi đã gửi link reset mật khẩu về:
         </Text>
         <Text style={styles.email}>{email || "your email address"}</Text>
 
         <Text style={styles.description}>
-          Please check your email and click on the link to reset your password.
-          The link will expire in 15 minutes for security reasons.
+          Vui lòng kiểm tra emai của bạn và nhấn vào đường link.
+          Đường link chỉ có hạn trong 15p và sau 15p sẽ mất.
         </Text>
 
         <View style={styles.instructions}>
-          <Text style={styles.instructionTitle}>Didn't receive the email?</Text>
-          <Text style={styles.instructionText}>• Check your spam folder</Text>
+          <Text style={styles.instructionTitle}>Không nhận được link?</Text>
+          <Text style={styles.instructionText}>• Kiểm tra thư mục thư rác của bạn</Text>
           <Text style={styles.instructionText}>
-            • Make sure you entered the correct email
+            • Hãy chắc chắn rằng bạn nhập đúng email
           </Text>
           <Text style={styles.instructionText}>
-            • Try again in a few minutes
+            • Vui lòng thử lại trong ít phút
           </Text>
         </View>
 
@@ -48,14 +47,14 @@ const EmailSentScreen = () => {
           style={styles.resendButton}
           onPress={() => navigation.navigate("ForgotPassword")}
         >
-          <Text style={styles.resendButtonText}>Resend Email</Text>
+          <Text style={styles.resendButtonText}>Gửi lại</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.backToLoginButton}
           onPress={() => navigation.replace("Login")}
         >
-          <Text style={styles.backToLoginText}>Back to Login</Text>
+          <Text style={styles.backToLoginText}>Về Đăng Nhập</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

@@ -1,4 +1,5 @@
 import { GET_ALL, GET_IMG } from "@/app/service/APIService";
+import { formatPrice } from "@/app/utils/currencyFormatter";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -72,9 +73,12 @@ const ProductList = () => {
 
             <View style={styles.priceRow}>
               <Text style={styles.price}>
-                ${product.price.toLocaleString()}
+                {formatPrice(product.specialPrice)}
               </Text>
             </View>
+            {/* <View style={styles.priceRow}>
+              <Text style={styles.price}>{formatPrice(product.price)}</Text>
+            </View> */}
           </TouchableOpacity>
         ))}
       </View>

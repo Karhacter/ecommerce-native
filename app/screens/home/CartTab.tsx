@@ -1,4 +1,5 @@
 import {
+  GET_CART_BY_USER_EMAIL_AND_ID,
   GET_ID,
   GET_IMG,
   REMOVE_PRODUCT_FROM_CART,
@@ -42,10 +43,8 @@ const CartTab = () => {
       }
 
       // const cartId = parseInt(cartIdStr);
-      const response = await GET_ID(
-        `public/users/${encodeURIComponent(email)}/carts`,
-        cartIdStr
-      );
+      const cartId = parseInt(cartIdStr);
+      const response = await GET_CART_BY_USER_EMAIL_AND_ID(email, cartId);
 
       if (response.status === 200) {
         const items = response.data.products || [];
@@ -55,7 +54,7 @@ const CartTab = () => {
             const stock = await fetchProductStock(item.productId);
             return {
               ...item,
-              stockQuantity: stock ?? 0,
+              stockQuantity: stock ?? 0, // nếu không có thì cho là 0
             };
           })
         );
@@ -82,24 +81,28 @@ const CartTab = () => {
   ) => {
     if (newQuantity < 1) return;
 
+    // Find the item to check stock
+    const item = cartItems.find((item) => item.productId === productId);
+    if (!item) return;
+
+    // Check stock availability
+    if (newQuantity > item.stockQuantity) {
+      Alert.alert(
+        "Thông báo",
+        `Chỉ còn ${item.stockQuantity} sản phẩm trong kho`
+      );
+      return;
+    }
+
     try {
       const cartIdStr = await AsyncStorage.getItem("cart-id");
       if (!cartIdStr) return;
       const cartId = parseInt(cartIdStr);
 
-      const item = cartItems.find((item) => item.productId === productId);
-      if (!item) return;
-
-      if (newQuantity > item.stockQuantity) {
-        Alert.alert(
-          "Stock Limit Exceeded",
-          `Only ${item.stockQuantity} items available in stock.`
-        );
-        return;
-      }
-
+      // ✅ Gọi API trước
       await UPDATE_PRODUCT_QUANTITY(cartId, productId, newQuantity);
 
+      // ✅ Rồi mới update lại state local nếu API thành công
       setCartItems((prevItems) =>
         prevItems.map((item) =>
           item.productId === productId
@@ -107,16 +110,9 @@ const CartTab = () => {
             : item
         )
       );
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Lỗi cập nhật:", err);
-      const errorMessage =
-        err?.response?.data?.message || "Không thể cập nhật số lượng.";
-
-      if (errorMessage.includes("quantity") || errorMessage.includes("stock")) {
-        Alert.alert("Stock Issue", errorMessage);
-      } else {
-        Alert.alert("Lỗi", errorMessage);
-      }
+      Alert.alert("Lỗi", "Không thể cập nhật số lượng.");
     }
   };
 
@@ -125,6 +121,10 @@ const CartTab = () => {
       const cartIdStr = await AsyncStorage.getItem("cart-id");
       if (!cartIdStr) return;
       const cartId = parseInt(cartIdStr);
+
+      setCartItems((prevItems) =>
+        prevItems.filter((item) => item.productId !== productId)
+      );
 
       await REMOVE_PRODUCT_FROM_CART(cartId, productId);
       fetchCartItems();
@@ -136,7 +136,8 @@ const CartTab = () => {
 
   const subtotal = useMemo(() => {
     return cartItems.reduce((sum, item) => {
-      const price = item.specialPrice || 0;
+      if (item.stockQuantity === 0) return sum; // bỏ sản phẩm hết hàng
+      const price = item.specialPrice ?? item.price ?? 0;
       return sum + price * item.quantity;
     }, 0);
   }, [cartItems]);
@@ -161,34 +162,41 @@ const CartTab = () => {
           Tồn kho: {item.stockQuantity}
         </Text>
 
+        {/* Update quantity */}
         <View style={styles.quantityRow}>
-          <TouchableOpacity
-            style={styles.qtyButton}
-            onPress={() =>
-              handleUpdateQuantity(item.productId, item.quantity - 1)
-            }
-            disabled={item.quantity <= 1}
-          >
-            <Text style={styles.qtyText}>-</Text>
-          </TouchableOpacity>
+          {item.stockQuantity > 0 ? (
+            <>
+              <TouchableOpacity
+                style={styles.qtyButton}
+                onPress={() =>
+                  handleUpdateQuantity(item.productId, item.quantity - 1)
+                }
+                disabled={item.quantity <= 1}
+              >
+                <Text style={styles.qtyText}>-</Text>
+              </TouchableOpacity>
 
-          <Text style={styles.qtyNumber}>{item.quantity}</Text>
+              <Text style={styles.qtyNumber}>{item.quantity}</Text>
 
-          <TouchableOpacity
-            style={[
-              styles.qtyButton,
-              {
-                backgroundColor:
-                  item.quantity >= item.stockQuantity ? "#ccc" : "#ddd",
-              },
-            ]}
-            onPress={() =>
-              handleUpdateQuantity(item.productId, item.quantity + 1)
-            }
-            disabled={item.quantity >= item.stockQuantity}
-          >
-            <Text style={styles.qtyText}>+</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.qtyButton,
+                  {
+                    backgroundColor:
+                      item.quantity >= item.stockQuantity ? "#ccc" : "#ddd",
+                  },
+                ]}
+                onPress={() =>
+                  handleUpdateQuantity(item.productId, item.quantity + 1)
+                }
+                disabled={item.quantity >= item.stockQuantity}
+              >
+                <Text style={styles.qtyText}>+</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={{ color: "red", fontWeight: "bold" }}>Hết hàng</Text>
+          )}
         </View>
       </View>
     </View>
@@ -224,7 +232,7 @@ const CartTab = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Cart</Text>
+        <Text style={styles.headerTitle}>Giỏ Hàng Của Tôi</Text>
         <Text style={styles.headerSubtitle}>
           {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
         </Text>
@@ -241,6 +249,7 @@ const CartTab = () => {
       ) : (
         <SwipeListView
           data={cartItems}
+          keyExtractor={(item) => String(item.cartItemId)}
           renderItem={renderItem}
           renderHiddenItem={renderHiddenItem}
           leftOpenValue={75}
@@ -252,7 +261,6 @@ const CartTab = () => {
           previewOpenDelay={3000}
           style={styles.itemsContainer}
           contentContainerStyle={{ paddingBottom: 20 }}
-          keyExtractor={(item) => item.productId.toString()}
         />
       )}
 
@@ -296,11 +304,7 @@ const CartTab = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 20,
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
+  container: { paddingTop: 20, flex: 1, backgroundColor: "#f8f9fa" },
   header: {
     padding: 20,
     backgroundColor: "#fff",
@@ -320,6 +324,7 @@ const styles = StyleSheet.create({
     color: "#6c757d",
   },
   itemsContainer: {
+    paddingTop: 16,
     flex: 1,
   },
   emptyContainer: {

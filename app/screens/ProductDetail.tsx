@@ -3,7 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Image,
@@ -14,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { GET_ID, GET_IMG, POST_ADD, PUT_EDIT } from "../service/APIService";
+import { formatPrice } from "../utils/currencyFormatter";
 
 const { width } = Dimensions.get("window");
 
@@ -46,7 +46,6 @@ const ProductDetail = ({
         }).start();
       } catch (error) {
         console.error("Error fetching product details: ", error);
-        Alert.alert("Error", "Failed to load product details");
       } finally {
         setLoading(false);
       }
@@ -60,108 +59,13 @@ const ProductDetail = ({
           "public/users/email",
           encodeURIComponent(email)
         );
-        setCartId(response.data.cart.cartId);
+        setCartId(response.data.cart?.cartId);
       }
     };
 
     FetchProductDetails();
     fetchCartId();
   }, [productId]);
-
-  const handleAddToCart = async () => {
-    // setAddingToCart(true);
-    // try {
-    //   const email = await AsyncStorage.getItem("user-email");
-    //   const cartIdStr = await AsyncStorage.getItem("cart-id");
-    //   if (!email || !cartIdStr) {
-    //     Alert.alert("Login Required", "Please login to add items to cart");
-    //     return;
-    //   }
-    //   // Validate quantity against available stock
-    //   if (quantity > product.quantity) {
-    //     Alert.alert(
-    //       "Stock Limit Exceeded",
-    //       `Only ${product.quantity} items available in stock.`
-    //     );
-    //     return;
-    //   }
-    //   const cartId = parseInt(cartIdStr);
-    //   // Check if product already exists in cart and adjust quantity accordingly
-    //   const existingCartResponse = await GET_CART_BY_USER_EMAIL_AND_ID(
-    //     email,
-    //     cartId
-    //   );
-    //   const existingItems = existingCartResponse.data.products || [];
-    //   const existingItem = existingItems.find(
-    //     (item: any) => item.productId === product.productId
-    //   );
-    //   let finalQuantity = quantity;
-    //   if (existingItem) {
-    //     const newTotalQuantity = existingItem.quantity + quantity;
-    //     if (newTotalQuantity > product.quantity) {
-    //       Alert.alert(
-    //         "Stock Limit Exceeded",
-    //         `You already have ${existingItem.quantity} in cart. Only ${
-    //           product.quantity - existingItem.quantity
-    //         } more can be added.`
-    //       );
-    //       return;
-    //     }
-    //     finalQuantity = newTotalQuantity;
-    //   }
-    //   await ADD_TO_CART(cartId, product.productId, finalQuantity);
-    //   Alert.alert("Success", "Added to cart!", [
-    //     {
-    //       text: "Continue Shopping",
-    //       onPress: () => navigation.goBack(),
-    //       style: "cancel",
-    //     },
-    //     {
-    //       text: "View Cart",
-    //       onPress: () => navigation.navigate("Home", { screen: "Cart" }),
-    //     },
-    //   ]);
-    // } catch (error: any) {
-    //   console.error("Add to cart error:", error);
-    //   Alert.alert(
-    //     "Error",
-    //     error?.response?.data?.message || "Failed to add to cart"
-    //   );
-    // } finally {
-    //   setAddingToCart(false);
-    // }
-
-    if (!cartId) {
-      console.error("Không tìm thấy ID giỏ hàng");
-      return;
-    }
-    try {
-      const endpoint = `public/carts/${cartId}/products/${productId}/quantity/${quantity}`;
-      await POST_ADD(endpoint, null);
-      alert("Thêm sản phẩm vào giỏ hàng thành công!");
-      navigation.replace("Home");
-    } catch (error: any) {
-      if (error.response && error.response.status === 400) {
-        // Product already exists, so update quantity
-        try {
-          const updateEndpoint = `public/carts/${cartId}/products/${productId}/quantity/${quantity}`;
-          await PUT_EDIT(updateEndpoint, null); // Use the PUT method to update quantity
-          alert("Thêm sản phẩm vào giỏ hàng thành công!");
-          navigation.replace("Home");
-        } catch (updateError) {
-          console.error("Lỗi khi cập nhật số lượng sản phẩm:", updateError);
-          alert("Có lỗi xảy ra khi cập nhật số lượng sản phẩm.");
-        }
-      } else {
-      }
-      console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
-      alert("Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.");
-    }
-  };
-
-  const handleIncreaseQty = () => setQuantity(quantity + 1);
-
-  const handleDecreaseQty = () => setQuantity(quantity > 1 ? quantity - 1 : 1);
 
   if (loading) {
     return (
@@ -170,6 +74,48 @@ const ProductDetail = ({
       </View>
     );
   }
+
+  const handleAddToCart = async () => {
+    if (!cartId) {
+      console.error("Không tìm thấy ID giỏ hàng");
+      return;
+    }
+
+    try {
+      // Store original quantity with the product
+      const productWithOriginalQuantity = {
+        ...product,
+        originalQuantity: product.quantity,
+        selectedQuantity: quantity,
+      };
+
+      const endpoint = `public/carts/${cartId}/products/${productId}/quantity/${quantity}`;
+      await POST_ADD(endpoint, productWithOriginalQuantity);
+      alert(`Thêm sản phẩm vào giỏ hàng thành công!`);
+      navigation.replace("Home");
+    } catch (error: any) {
+      if (error.response && error.response.status === 400) {
+        try {
+          const updateEndpoint = `public/carts/${cartId}/products/${productId}/quantity/${quantity}`;
+          await PUT_EDIT(updateEndpoint, null);
+          alert(`Cập nhật số lượng thành công!`);
+          navigation.replace("Home");
+        } catch (updateError) {
+          console.error("Lỗi khi cập nhật số lượng sản phẩm:", updateError);
+          alert("Có lỗi xảy ra khi cập nhật số lượng sản phẩm.");
+        }
+      } else {
+        console.error("Lỗi khi thêm sản phẩm vào giỏ hàng:", error);
+        alert("Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng.");
+      }
+    }
+  };
+
+  const handleIncreaseQty = () => setQuantity(quantity + 1);
+
+  const handleDecreaseQty = () => setQuantity(quantity > 1 ? quantity - 1 : 1);
+
+  const totalPrice = (product.specialPrice * quantity).toFixed(2);
 
   if (!product) {
     return (
@@ -228,9 +174,13 @@ const ProductDetail = ({
         <Text style={styles.productName}>{product.productName}</Text>
 
         <View style={styles.priceRow}>
-          <Text style={styles.currentPrice}>${product.price}</Text>
-          {product.originalPrice && (
-            <Text style={styles.originalPrice}>${product.originalPrice}</Text>
+          <Text style={styles.currentPrice}>
+            {formatPrice(product.specialPrice)}
+          </Text>
+          {product.price && (
+            <Text style={styles.originalPrice}>
+              {formatPrice(product.price)}
+            </Text>
           )}
         </View>
 
@@ -281,6 +231,10 @@ const ProductDetail = ({
           <Text style={styles.stockText}>
             {product.quantity} items available
           </Text>
+          <View>
+            <Text>Total Price</Text>
+            <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
+          </View>
         </View>
 
         {/* Description */}
@@ -312,6 +266,11 @@ const ProductDetail = ({
 };
 
 const styles = StyleSheet.create({
+  totalPrice: {
+    fontWeight: "bold",
+    fontSize: 20,
+    textAlign: "right",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",

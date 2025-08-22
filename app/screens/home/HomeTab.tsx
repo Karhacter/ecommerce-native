@@ -68,7 +68,7 @@ const HomeTab = () => {
             style={styles.logo}
           />
         </View>
-        <Text style={styles.title}>Welcome,</Text>
+        <Text style={styles.title}>Xin Chào,</Text>
         <Text style={styles.subtitle}>Our Fashions App</Text>
       </View>
 

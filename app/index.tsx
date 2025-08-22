@@ -29,6 +29,6 @@ export default function RootLayout() {
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="EmailSent" component={EmailSentScreen} />
-    </Stack.Navigator>
+      </Stack.Navigator>
   );
 }

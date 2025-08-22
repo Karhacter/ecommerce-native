@@ -1,12 +1,25 @@
 {
   "expo": {
-    "name": "TabDemo",
-    "slug": "TabDemo",
+    "name": "ecommerce-native",
+    "slug": "ecommerce-native",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "tabdemo",
     "userInterfaceStyle": "automatic",
+    "scheme": "ecommercenative",
+    "intentFilters": [
+      {
+        "action": "VIEW",
+        "autoVerify": true,
+        "data": [
+          {
+            "scheme": "ecommercenative",
+            "host": "complete-payment"
+          }
+        ],
+        "category": ["BROWSABLE", "DEFAULT"]
+      }
+    ],
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
@@ -16,7 +29,20 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "ecommercenative",
+               "host": "payment"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",

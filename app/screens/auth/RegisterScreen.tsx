@@ -17,12 +17,12 @@ const RegisterScreen = () => {
     email: "",
     mobileNumber: "",
     password: "",
-    street: "",
-    buildingName: "",
-    city: "",
-    state: "",
-    country: "",
-    pincode: "",
+    street: "666666",
+    buildingName: "666666",
+    city: "666666",
+    state: "666666",
+    country: "666666",
+    pincode: "666666",
   });
   const navigation = useNavigation<any>();
 
@@ -77,7 +77,7 @@ const RegisterScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.title}>Tạo Tài Khoản</Text>
       <Text style={styles.subtitle}>
         please fill in your details to register
       </Text>

@@ -32,7 +32,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome!</Text>
+        <Text style={styles.title}>Xin Chào!</Text>
       <Text style={styles.subtitle}>
         please login or sign up to continue our app
       </Text>
