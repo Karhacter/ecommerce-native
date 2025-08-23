@@ -1,3 +1,4 @@
+import { handleLogout } from "@/app/service/APIService";
 import { useNavigation } from "expo-router";
 import React from "react";
 import {
@@ -63,7 +64,7 @@ const ProfileTab = () => {
       {/* Logout Button */}
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
+        onPress={() => handleLogout(navigation)}
       >
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>

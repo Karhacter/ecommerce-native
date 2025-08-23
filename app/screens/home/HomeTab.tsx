@@ -9,9 +9,9 @@ import {
   View,
 } from "react-native";
 import { Button } from "react-native-paper";
-import CategoryList from "./components/product/CategoryList";
 import FeaturedProducts from "./components/product/FeaturedProducts";
 import ProductList from "./components/product/ProductList";
+import ProductNew from "./components/product/ProductNew";
 
 const HomeTab = () => {
   // Bottom categories section data
@@ -85,10 +85,9 @@ const HomeTab = () => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <FeaturedProducts />
-        <Text style={styles.title}>Categoires</Text>
 
         {/* Categories Section */}
-        <CategoryList />
+        {/* <CategoryList /> */}
 
         {/* Featured Products */}
         <ProductList />
@@ -118,12 +117,20 @@ const HomeTab = () => {
             </TouchableOpacity>
           ))}
         </View>
+        <Text style={styles.titleNew}>Sản phẩm mới</Text>
+        <ProductNew />
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  titleNew: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "red",
+  },
   // Test
   container1: {
     flexDirection: "row", // arrange horizontally

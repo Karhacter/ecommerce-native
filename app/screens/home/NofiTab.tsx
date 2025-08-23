@@ -1,4 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "expo-router";
 import React from "react";
 import {
   Image,
@@ -11,6 +12,7 @@ import {
 import * as Animatable from "react-native-animatable";
 
 const NofiTab = () => {
+  const navigation = useNavigation<any>();
   const notifications = [
     {
       id: "1",
@@ -55,7 +57,10 @@ const NofiTab = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate("Search")}
+          >
             <MaterialIcons name="search" size={24} color="#333" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>

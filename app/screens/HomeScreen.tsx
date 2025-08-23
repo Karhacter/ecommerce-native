@@ -2,14 +2,15 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 
+import ChatScreen from "./ChatScreen";
 import CartTab from "./home/CartTab";
 import HomeScreen from "./home/HomeTab";
-import NofiTab from "./home/NofiTab";
 import ProfileTab from "./home/ProfileTab";
+import SearchScreen from "./SearchScreen";
 
 const Tab = createBottomTabNavigator();
 
-export default function HomeTabs() {
+export default function Home() {
   return (
     <Tab.Navigator
       screenOptions={{
@@ -31,12 +32,22 @@ export default function HomeTabs() {
           ),
         }}
       />
+
       <Tab.Screen
-        name="Nofi"
-        component={NofiTab}
+        name="Search"
+        component={SearchScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="notifications" size={size} color={color} />
+            <Ionicons name="search" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ChatBox"
+        component={ChatScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbox" size={size} color={color} />
           ),
         }}
       />

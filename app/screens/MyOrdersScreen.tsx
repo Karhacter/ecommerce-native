@@ -165,7 +165,7 @@ const MyOrdersScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Đơn hàng của tôi</Text>
+        <Text style={styles.headerTitle}>Lịch Sử Thanh Toán</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -179,7 +179,7 @@ const MyOrdersScreen = () => {
               activeTab === "Ongoing" ? styles.activeTabText : styles.tabText
             }
           >
-            Đang giao
+            Đã hoàn thành
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -191,7 +191,7 @@ const MyOrdersScreen = () => {
               activeTab === "Completed" ? styles.activeTabText : styles.tabText
             }
           >
-            Đã hoàn thành
+            Đang giao
           </Text>
         </TouchableOpacity>
       </View>

@@ -1,8 +1,10 @@
 import { POST_LOGIN } from "@/app/service/APIService";
+import { useAuth } from "@/app/service/AuthContext";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import React, { useState } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -14,25 +16,22 @@ const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigation = useNavigation<any>();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
-    try {
-      const success = await POST_LOGIN(email, password);
-      if (success) {
-        alert(`Login success! Welcome back ${email}`);
-        navigation.navigate("Home");
-      } else {
-        alert("Login failed: Invalid email or password");
-      }
-    } catch (error) {
-      alert("Login failed: Something went wrong");
-      console.error("Login error", error);
+    const token = await POST_LOGIN(email, password); // token là string | null
+    if (token) {
+      Alert.alert("Đăng nhập thành công");
+      await login(token); // ✅ đúng kiểu string
+      navigation.replace("Home");
+    } else {
+      Alert.alert("Đăng nhập thất bại", "Sai email hoặc mật khẩu");
     }
   };
 
   return (
     <View style={styles.container}>
-        <Text style={styles.title}>Xin Chào!</Text>
+      <Text style={styles.title}>Xin Chào!</Text>
       <Text style={styles.subtitle}>
         please login or sign up to continue our app
       </Text>
@@ -96,6 +95,8 @@ const LoginScreen = () => {
     </View>
   );
 };
+
+export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -191,5 +192,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
-export default LoginScreen;

@@ -1,4 +1,5 @@
-import React from "react";
+import { GET_ALL_PAGE } from "@/app/service/APIService";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   StyleSheet,
@@ -10,6 +11,40 @@ import {
 const { width } = Dimensions.get("window");
 
 const CategoryList = () => {
+  const [categories, setCategories] = useState<
+    { categoryId: number | null; categoryName: string }[]
+  >([]);
+  const [selectedCat, setSelectedCat] = useState<{
+    categoryId: number | null;
+    categoryName: string;
+  }>({
+    categoryId: null,
+    categoryName: "Tất cả",
+  });
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await GET_ALL_PAGE(
+          "categories",
+          0,
+          10,
+          "categoryId",
+          "asc"
+        );
+        const fetched = response.data.content;
+        setCategories([
+          { categoryId: null, categoryName: "Tất cả" },
+          ...fetched,
+        ]);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
   // Categories for the top section
   const topCategories = [
     { id: "1", name: "Dresses" },
@@ -17,6 +52,7 @@ const CategoryList = () => {
     { id: "3", name: "Jeans" },
     { id: "4", name: "Shoes" },
   ];
+  const [loading, setLoading] = useState(true);
 
   return (
     <>

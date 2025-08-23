@@ -18,7 +18,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const ProductList = () => {
+const ProductNew = () => {
   const navigation = useNavigation<any>();
   const [products, setProducts] = useState([]);
 
@@ -45,7 +45,7 @@ const ProductList = () => {
           0,
           10,
           "categoryId",
-          "asc"
+          "desc"
         );
         const fetched = response.data.content;
         setCategories([
@@ -72,7 +72,7 @@ const ProductList = () => {
             0,
             10,
             "productId",
-            "asc"
+            "desc"
           );
           setProducts(response.data.content);
         } else {
@@ -97,8 +97,8 @@ const ProductList = () => {
     const FetchProduct = async () => {
       try {
         const endpoint = selectedCategory
-          ? `public/categories/${selectedCategory}/products?pageNumber=0&pageSize=5&sortBy=productId&sortOrder=asc`
-          : "public/products?pagNumber=0&pageSize=5&sortBy=productId&sortOrder=asc";
+          ? `public/categories/${selectedCategory}/products?pageNumber=0&pageSize=5&sortBy=productId&sortOrder=desc`
+          : "public/products?pagNumber=0&pageSize=5&sortBy=productId&sortOrder=desc";
         const response = await GET_ALL(endpoint);
         setProducts(response.data.content);
       } catch (error) {
@@ -113,7 +113,7 @@ const ProductList = () => {
     const fetchCategories = async () => {
       try {
         const response = await GET_ALL(
-          "public/categories?pageNumber=0&pageSize=5&sortBy=categoryId&sortOrder=asc"
+          "public/categories?pageNumber=0&pageSize=5&sortBy=categoryId&sortOrder=desc"
         );
         setCategories(response.data.content);
       } catch (error) {
@@ -130,8 +130,6 @@ const ProductList = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <Text style={styles.title}>Categoires</Text>
-        {/* Categories */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -160,7 +158,6 @@ const ProductList = () => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-
         {/* Products Grid */}
         {loading ? (
           <View
@@ -198,14 +195,13 @@ const ProductList = () => {
                   <Ionicons name="heart-outline" size={18} />
                 </TouchableOpacity>
                 <Text style={styles.productName}>{item.categoryName}</Text>
-
                 <Text style={styles.productName}>{item.productName}</Text>
                 <View style={styles.priceRow}>
                   <Text style={styles.price}>
                     {(item.specialPrice || item.price).toLocaleString("vi-VN")}₫
                   </Text>
                   {item.discount > 0 && (
-                    <Text style={styles.discount}>-{item.discount}%</Text>
+                    <Text style={styles.discount}>New</Text>
                   )}
                 </View>
               </TouchableOpacity>
@@ -217,7 +213,7 @@ const ProductList = () => {
   );
 };
 
-export default ProductList;
+export default ProductNew;
 
 const styles = StyleSheet.create({
   container: {
@@ -317,6 +313,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontWeight: "500",
     fontSize: 14,
+  },
+  categoryName: {
+    marginTop: 8,
+    fontWeight: "500",
+    fontSize: 14,
+    paddingBottom: 20,
   },
   priceRow: {
     flexDirection: "row",

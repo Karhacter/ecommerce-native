@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosResponse } from "axios";
 
-let API_URL = "http://192.168.1.3:8080/api";
+let API_URL = "http://localhost:8080/api";
 
 async function getToken() {
   return await AsyncStorage.getItem("jwt-token");
@@ -183,10 +183,8 @@ export async function POST_REGISTER(userData: {
 export async function handleLogout(navigation: any): Promise<void> {
   try {
     await AsyncStorage.multiRemove(["jwt-token", "user-email", "cart-id"]);
+    location.href = "/"; // Redirect to home page
     console.log("✅ Đã đăng xuất và xóa dữ liệu người dùng.");
-
-    // ⚠️ Dùng replace để không quay lại màn trước
-    navigation.replace("SignIn");
   } catch (error) {
     console.error("❌ Lỗi khi đăng xuất:", error);
   }
