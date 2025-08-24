@@ -44,7 +44,7 @@ const fetch = require("node-fetch");
 const axios = require("axios");
 
 // 🔑 Gemini API Key
-const GEMINI_KEY = process.env.GEMINI_KEY || "YOUR_GEMINI_API_KEY";
+const GEMINI_KEY = process.env.GEMINI_KEY;
 
 // 🔗 Backend Spring Boot
 const API_URL = "http://localhost:8080/api";
